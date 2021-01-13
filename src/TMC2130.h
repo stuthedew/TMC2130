@@ -11,6 +11,8 @@
 #include <SPI.h>
 
 
+
+
 class TMC2130
 {
 public:
@@ -39,7 +41,7 @@ public:
 
   struct Status
   {
-    uint32_t load : 10;
+    uint32_t SG_RESULT : 10;
     uint32_t space0 : 5;
     uint32_t full_step_active : 1;
     uint32_t current_scaling : 5;
@@ -94,7 +96,15 @@ public:
 private:
   // SPISettings
   const static uint32_t SPI_CLOCK = 1000000;
-  const static uint8_t SPI_BIT_ORDER = MSBFIRST;
+   //Hack to fix compiling error with Adafruit Qt-Py (if Qt-Py, chnage SPI_BIT_ORDER to BitOrder type, else original  type of uint8_t)
+  #if !defined(ARDUINO_ARCH_SAM) && !defined(ARDUINO_ARCH_SAMD) && !defined(ESP8266) && !defined(ARDUINO_ARCH_STM32F2)
+   const static uint8_t SPI_BIT_ORDER = MSBFIRST;
+
+  #else
+   const static BitOrder SPI_BIT_ORDER = MSBFIRST;
+
+  #endif
+
   const static uint8_t SPI_MODE = SPI_MODE3;
 
   // Datagrams
