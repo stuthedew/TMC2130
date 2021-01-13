@@ -41,7 +41,7 @@ public:
 
   struct Status
   {
-    uint32_t load : 10;
+    uint32_t SG_RESULT : 10;
     uint32_t space0 : 5;
     uint32_t full_step_active : 1;
     uint32_t current_scaling : 5;
