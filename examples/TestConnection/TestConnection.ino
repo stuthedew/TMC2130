@@ -4,7 +4,9 @@
 
 const long BAUD = 115200;
 const int LOOP_DELAY = 2000;
-const int CHIP_SELECT_PIN = 14;
+const int CHIP_SELECT_PIN = A2;
+const int CHIP_PWR_PIN = A3;
+
 
 // Instantiate TMC2130
 TMC2130 stepper_driver;
@@ -14,12 +16,20 @@ void setup()
   // Setup serial communications
   Serial.begin(BAUD);
 
+  pinMode(CHIP_PWR_PIN, OUTPUT);
+  digitalWrite(CHIP_PWR_PIN, LOW);
+  delay(1000);
+  digitalWrite(CHIP_PWR_PIN, HIGH);
+  delay(1000);
+
   stepper_driver.setup(CHIP_SELECT_PIN);
+
 
 }
 
 void loop()
 {
+
   if (stepper_driver.communicating())
   {
     Serial.println(F("SPI communicating with stepper driver!"));
@@ -32,6 +42,7 @@ void loop()
   stepper_driver.initialize();
 
   TMC2130::Status status = stepper_driver.getStatus();
+
   Serial.print(F("status.load = "));
   Serial.println(status.SG_RESULT);
 
@@ -66,16 +77,8 @@ void loop()
   Serial.print(F("status.standstill = "));
   Serial.println(status.standstill);
 
-  // stepper_driver.setRunCurrent(100);
-  // Serial.println(F("\n";
-  // stepper_driver.setHoldCurrent(50);
-  // Serial.println(F("\n";
-  // stepper_driver.setHoldDelay(50);
-  // Serial.println(F("\n";
-
-  // stepper_driver.setAllCurrentValues(100,50,50);
-  // Serial.println(F("\n";
 
   Serial.println();
+
   delay(LOOP_DELAY);
 }

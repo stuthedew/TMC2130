@@ -96,6 +96,7 @@ public:
 private:
   // SPISettings
   const static uint32_t SPI_CLOCK = 1000000;
+
    //Hack to fix compiling error with Adafruit Qt-Py (if Qt-Py, chnage SPI_BIT_ORDER to BitOrder type, else original  type of uint8_t)
   #if !defined(ARDUINO_ARCH_SAM) && !defined(ARDUINO_ARCH_SAMD) && !defined(ESP8266) && !defined(ARDUINO_ARCH_STM32F2)
    const static uint8_t SPI_BIT_ORDER = MSBFIRST;
