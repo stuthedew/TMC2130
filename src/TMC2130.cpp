@@ -45,12 +45,17 @@ void TMC2130::setup(size_t chip_select_pin,
 
 bool TMC2130::communicating()
 {
-  return (getVersion() == VERSION);
+
+  int ver = getVersion();
+
+  return (ver == VERSION);
 }
 
 uint8_t TMC2130::getVersion()
 {
+
   uint32_t data = read(ADDRESS_IOIN);
+
 
   InputPinStatus input_pin_status;
   input_pin_status.uint32 = data;
@@ -322,7 +327,9 @@ uint32_t TMC2130::sendReceivePrevious(TMC2130::MosiDatagram & mosi_datagram)
   for (int i=(DATAGRAM_SIZE - 1); i>=0; --i)
   {
     uint8_t byte_write = (mosi_datagram.uint64 >> (8*i)) & 0xff;
+
     uint8_t byte_read = SPI.transfer(byte_write);
+    //Serial.print(byte_read, HEX);
     miso_datagram.uint64 |= byte_read << (8*i);
   }
   spiEndTransaction();
@@ -331,7 +338,10 @@ uint32_t TMC2130::sendReceivePrevious(TMC2130::MosiDatagram & mosi_datagram)
   spi_status_ = miso_datagram.fields.spi_status;
   interrupts();
 
-  return miso_datagram.fields.data;
+
+
+
+  return miso_datagram.fields.data
 }
 
 uint32_t TMC2130::write(uint8_t address,
@@ -355,8 +365,9 @@ uint32_t TMC2130::read(uint8_t address)
 
   // must read twice to get value at address
   sendReceivePrevious(mosi_datagram);
-  uint32_t data = sendReceivePrevious(mosi_datagram);
-  return data;
+  uint64_t data = sendReceivePrevious(mosi_datagram);
+
+ return data;
 }
 
 uint8_t TMC2130::percentToCurrentSetting(uint8_t percent)
@@ -443,6 +454,7 @@ void TMC2130::disableClockSelect()
 {
   digitalWrite(chip_select_pin_,HIGH);
 }
+
 void TMC2130::spiBeginTransaction()
 {
   SPI.beginTransaction(SPISettings(SPI_CLOCK,SPI_BIT_ORDER,SPI_MODE));

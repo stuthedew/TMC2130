@@ -1,11 +1,12 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include <Streaming.h>
 #include <TMC2130.h>
 
 const long BAUD = 115200;
 const int LOOP_DELAY = 2000;
-const int CHIP_SELECT_PIN = 14;
+const int CHIP_SELECT_PIN = A2;
+const int CHIP_PWR_PIN = A3;
+
 
 // Instantiate TMC2130
 TMC2130 stepper_driver;
@@ -15,46 +16,69 @@ void setup()
   // Setup serial communications
   Serial.begin(BAUD);
 
+  pinMode(CHIP_PWR_PIN, OUTPUT);
+  digitalWrite(CHIP_PWR_PIN, LOW);
+  delay(1000);
+  digitalWrite(CHIP_PWR_PIN, HIGH);
+  delay(1000);
+
   stepper_driver.setup(CHIP_SELECT_PIN);
+
 
 }
 
 void loop()
 {
+
   if (stepper_driver.communicating())
   {
-    Serial << "SPI communicating with stepper driver!\n";
+    Serial.println(F("SPI communicating with stepper driver!"));
   }
   else
   {
-    Serial << "SPI not communicating with stepper driver!\n";
+    Serial.println(F("SPI not communicating with stepper driver!"));
   }
 
   stepper_driver.initialize();
 
   TMC2130::Status status = stepper_driver.getStatus();
-  Serial << "status.load = " << status.load << "\n";
-  Serial << "status.full_step_active = " << status.full_step_active << "\n";
-  Serial << "status.current_scaling = " << status.current_scaling << "\n";
-  Serial << "status.stall = " << status.stall << "\n";
-  Serial << "status.over_temperature_shutdown = " << status.over_temperature_shutdown << "\n";
-  Serial << "status.over_temperature_warning = " << status.over_temperature_warning << "\n";
-  Serial << "status.short_to_ground_a = " << status.short_to_ground_a << "\n";
-  Serial << "status.short_to_ground_b = " << status.short_to_ground_b << "\n";
-  Serial << "status.open_load_a = " << status.open_load_a << "\n";
-  Serial << "status.open_load_b = " << status.open_load_b << "\n";
-  Serial << "status.standstill = " << status.standstill << "\n";
 
-  // stepper_driver.setRunCurrent(100);
-  // Serial << "\n";
-  // stepper_driver.setHoldCurrent(50);
-  // Serial << "\n";
-  // stepper_driver.setHoldDelay(50);
-  // Serial << "\n";
+  Serial.print(F("status.load = "));
+  Serial.println(status.SG_RESULT);
 
-  // stepper_driver.setAllCurrentValues(100,50,50);
-  // Serial << "\n";
+  Serial.print(F("status.full_step_active = "));
+  Serial.println(status.full_step_active);
 
-  Serial << "\n";
+  Serial.print(F("status.current_scaling = "));
+  Serial.println(status.current_scaling);
+
+
+  Serial.print(F("status.stall = "));
+  Serial.println(status.stall);
+
+  Serial.print(F("status.over_temperature_shutdown = "));
+  Serial.println(status.over_temperature_shutdown);
+
+  Serial.print(F("status.over_temperature_warning = "));
+  Serial.println(status.over_temperature_warning);
+
+  Serial.print(F("status.short_to_ground_a = "));
+  Serial.println(status.short_to_ground_a);
+
+  Serial.print(F("status.short_to_ground_b = "));
+  Serial.println(status.short_to_ground_b);
+
+  Serial.print(F("status.open_load_a = "));
+  Serial.println(status.open_load_a);
+
+  Serial.print(F("status.open_load_b = "));
+  Serial.println(status.open_load_b);
+
+  Serial.print(F("status.standstill = "));
+  Serial.println(status.standstill);
+
+
+  Serial.println();
+
   delay(LOOP_DELAY);
 }
