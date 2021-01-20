@@ -8,17 +8,14 @@
 #ifndef TMC2130_H
 #define TMC2130_H
 #include <Arduino.h>
-#include <SPI.h>
-
-
-
+#include "Reg_Config.h"
 
 class TMC2130
 {
 public:
   void setup(size_t chip_select_pin);
-  void setup(size_t chip_select_pin,
-    size_t enable_pin);
+  void setup(size_t chip_select_pin, size_t enable_pin);
+
 
   bool communicating();
   uint8_t getVersion();
@@ -94,34 +91,22 @@ public:
   Settings getSettings();
 
 private:
-  // SPISettings
-  const static uint32_t SPI_CLOCK = 1000000;
 
-   //Hack to fix compiling error with Adafruit Qt-Py (if Qt-Py, chnage SPI_BIT_ORDER to BitOrder type, else original  type of uint8_t)
-  #if !defined(ARDUINO_ARCH_SAM) && !defined(ARDUINO_ARCH_SAMD) && !defined(ESP8266) && !defined(ARDUINO_ARCH_STM32F2)
-   const static uint8_t SPI_BIT_ORDER = MSBFIRST;
-
-  #else
-   const static BitOrder SPI_BIT_ORDER = MSBFIRST;
-
-  #endif
-
-  const static uint8_t SPI_MODE = SPI_MODE3;
+  //Adafruit BusIO SPI device
+  Adafruit_SPIDevice *_spi_dev;
 
   // Datagrams
   const static uint8_t DATAGRAM_SIZE = 5;
 
   // MOSI Datagram
-  union MosiDatagram
+  union Datagram
   {
     struct Fields
     {
-      uint64_t data : 32;
-      uint64_t address : 7;
-      uint64_t rw : 1;
-      uint64_t space : 24;
+      uint8_t address;
+      uint32_t data;
     } fields;
-    uint64_t uint64;
+    uint8_t raw[DATAGRAM_SIZE];
   };
 
   const static uint8_t RW_READ = 0;
@@ -137,20 +122,10 @@ private:
   };
   SpiStatus spi_status_;
 
-  // MISO Datagram
-  union MisoDatagram
-  {
-    struct Fields
-    {
-      uint64_t data : 32;
-      SpiStatus spi_status;
-      uint64_t space : 24;
-    } fields;
-    uint64_t uint64;
-  };
+
 
   // General Configuration Registers
-  const static uint8_t ADDRESS_GCONF = 0x00;
+  //const static uint8_t ADDRESS_GCONF = 0x00;
   union GlobalConfig
   {
     struct Fields
@@ -178,7 +153,7 @@ private:
   };
   GlobalConfig global_config_;
 
-  const static uint8_t ADDRESS_GSTAT = 0x01;
+  //const static uint8_t ADDRESS_GSTAT = 0x01;
   union GlobalStatus
   {
     struct Fields
@@ -191,7 +166,7 @@ private:
     uint32_t uint32;
   };
 
-  const static uint8_t ADDRESS_IOIN = 0x04;
+  //const static uint8_t ADDRESS_IOIN = 0x04;
   union InputPinStatus
   {
     struct Fields
@@ -213,7 +188,7 @@ private:
 
 
   // Velocity Dependent Driver Feature Control Register Set
-  const static uint8_t ADDRESS_IHOLD_IRUN = 0x10;
+  //const static uint8_t ADDRESS_IHOLD_IRUN = 0x10;
   union DriverCurrent
   {
     struct Fields
@@ -235,7 +210,7 @@ private:
   const static uint8_t HOLD_DELAY_MAX = 15;
   DriverCurrent driver_current_;
 
-  const static uint8_t ADDRESS_TPOWERDOWN = 0x11;
+  //const static uint8_t ADDRESS_TPOWERDOWN = 0x11;
   union PowerDownDelay
   {
     struct Fields
@@ -246,39 +221,40 @@ private:
     uint32_t uint32;
   };
 
-  const static uint8_t ADDRESS_TSTEP = 0x12;
+  //const static uint8_t ADDRESS_TSTEP = 0x12;
 
-  const static uint8_t ADDRESS_TPWMTHRS = 0x13;
+  //const static uint8_t ADDRESS_TPWMTHRS = 0x13;
   const static uint32_t TPWMTHRS_DEFAULT = 500;
 
-  const static uint8_t ADDRESS_TCOOLTHRS = 0x14;
+  //const static uint8_t ADDRESS_TCOOLTHRS = 0x14;
 
-  const static uint8_t ADDRESS_THIGH = 0x15;
+  //const static uint8_t ADDRESS_THIGH = 0x15;
 
   // SPI Mode Register
-  const static uint8_t ADDRESS_XDIRECT = 0x2D;
+  //const static uint8_t ADDRESS_XDIRECT = 0x2D;
 
   // dcStep Minimum Velocity Register
-  const static uint8_t ADDRESS_VDCMIN = 0x33;
+  //const static uint8_t ADDRESS_VDCMIN = 0x33;
 
   // Motor Driver Registers
 
   // Microstepping Control Register Set
-  const static uint8_t ADDRESS_MSLUT_0 = 0x60;
-  const static uint8_t ADDRESS_MSLUT_1 = 0x61;
-  const static uint8_t ADDRESS_MSLUT_2 = 0x62;
-  const static uint8_t ADDRESS_MSLUT_3 = 0x63;
-  const static uint8_t ADDRESS_MSLUT_4 = 0x64;
-  const static uint8_t ADDRESS_MSLUT_5 = 0x65;
-  const static uint8_t ADDRESS_MSLUT_6 = 0x66;
-  const static uint8_t ADDRESS_MSLUT_7 = 0x67;
-  const static uint8_t ADDRESS_MSLUTSEL = 0x68;
-  const static uint8_t ADDRESS_MSLUTSTART = 0x69;
-  const static uint8_t ADDRESS_MSCNT = 0x6A;
-  const static uint8_t ADDRESS_MSCURACT = 0x6B;
+  //const static uint8_t ADDRESS_MSLUT_0 = 0x60;
+  //const static uint8_t ADDRESS_MSLUT_1 = 0x61;
+  //const static uint8_t ADDRESS_MSLUT_2 = 0x62;
+  //const static uint8_t ADDRESS_MSLUT_3 = 0x63;
+  //const static uint8_t ADDRESS_MSLUT_4 = 0x64;
+  //const static uint8_t ADDRESS_MSLUT_5 = 0x65;
+  //const static uint8_t ADDRESS_MSLUT_6 = 0x66;
+  //const static uint8_t ADDRESS_MSLUT_7 = 0x67;
+  //const static uint8_t ADDRESS_MSLUTSEL = 0x68;
+  //const static uint8_t ADDRESS_MSLUTSTART = 0x69;
+  //const static uint8_t ADDRESS_MSCNT = 0x6A;
+  //const static uint8_t ADDRESS_MSCURACT = 0x6B;
 
   // Driver Register Set
-  const static uint8_t ADDRESS_CHOPCONF = 0x6C;
+  //const static uint8_t ADDRESS_CHOPCONF = 0x6C;
+  /**
   union ChopperConfig
   {
     struct Fields
@@ -303,6 +279,7 @@ private:
     } fields;
     uint32_t uint32;
   };
+  **/
   const static uint8_t MRES_256 = 0b0000;
   const static uint8_t MRES_128 = 0b0001;
   const static uint8_t MRES_064 = 0b0010;
@@ -318,9 +295,13 @@ private:
   const static uint8_t HEND_DEFAULT = 0; // -3
   const static uint8_t CHM_DEFAULT = 0; // spreadCycle
   const static uint8_t TBL_DEFAULT = 0b10; // 36 clocks
-  ChopperConfig chopper_config_;
 
-  const static uint8_t ADDRESS_COOLCONF = 0x6D;
+// CHOPPER Configuration
+  Adafruit_BusIO_Register *chopper_config_;
+  
+
+
+  //const static uint8_t ADDRESS_COOLCONF = 0x6D;
   union CoolConfig
   {
     struct Fields
@@ -348,8 +329,8 @@ private:
   const static int8_t SG_DEFAULT = 0;
   const static uint8_t SFILT_DEFAULT = 0;
 
-  const static uint8_t ADDRESS_DCCTRL = 0x6E;
-  const static uint8_t ADDRESS_DRV_STATUS = 0x6F;
+  //const static uint8_t ADDRESS_DCCTRL = 0x6E;
+  //const static uint8_t ADDRESS_DRV_STATUS = 0x6F;
   union DriveStatus
   {
     struct Fields
@@ -358,7 +339,7 @@ private:
     } fields;
     uint32_t uint32;
   };
-  const static uint8_t ADDRESS_PWMCONF = 0x70;
+  //const static uint8_t ADDRESS_PWMCONF = 0x70;
   union PwmConfig
   {
     struct Fields
@@ -389,9 +370,9 @@ private:
   const static uint8_t PWM_AUTOSCALE_DEFAULT = 1;
   PwmConfig pwm_config_;
 
-  const static uint8_t ADDRESS_PWM_SCALE = 0x71;
-  const static uint8_t ADDRESS_ENCM_CTRL = 0x72;
-  const static uint8_t ADDRESS_LOST_STEPS = 0x73;
+  //const static uint8_t ADDRESS_PWM_SCALE = 0x71;
+  //const static uint8_t ADDRESS_ENCM_CTRL = 0x72;
+  //const static uint8_t ADDRESS_LOST_STEPS = 0x73;
 
   size_t chip_select_pin_;
   int enable_pin_;
@@ -409,7 +390,7 @@ private:
   // microsteps = 2^exponent, 0=1,1=2,2=4,...8=256
   void setMicrostepsPerStepPowerOfTwo(uint8_t exponent);
 
-  uint32_t sendReceivePrevious(MosiDatagram & mosi_datagram);
+  uint32_t sendReceivePrevious(Datagram & mosi_datagram);
   uint32_t write(uint8_t address,
     uint32_t data);
   uint32_t read(uint8_t address);

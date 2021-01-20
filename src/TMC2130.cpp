@@ -9,24 +9,29 @@
 
 void TMC2130::setup(size_t chip_select_pin)
 {
-  chip_select_pin_ = chip_select_pin;
   enable_pin_ = -1;
 
-  pinMode(chip_select_pin_,OUTPUT);
-  digitalWrite(chip_select_pin_,HIGH);
+  _spi_dev = new Adafruit_SPIDevice(chip_select_pin, SPI_CLOCK, SPI_BIT_ORDER, SPI_MODE, &SPI); // Hardware SPI
 
-  SPI.begin();
+  chopper_config_ = new Adafruit_BusIO_Register(_spi_dev, ADDRESS_CHOPCONF, ADDRBIT8_HIGH_TOWRITE, PACKET_WIDTH, MSBFIRST);
+
+  Adafruit_BusIO_RegisterBits toff_bit = Adafruit_BusIO_RegisterBits (chopper_config_, TOFF_BIT_SIZE, TOFF_BIT_SHIFT);
+  Adafruit_BusIO_RegisterBits hstrt_bit = Adafruit_BusIO_RegisterBits(chopper_config_, HSTRT_BIT_SIZE, HSTRT_BIT_SHIFT);
+  Adafruit_BusIO_RegisterBits hend_bit = Adafruit_BusIO_RegisterBits(chopper_config_, HEND_BIT_SIZE, HEND_BIT_SHIFT);
+  Adafruit_BusIO_RegisterBits chm_bit = Adafruit_BusIO_RegisterBits(chopper_config_, CHM_BIT_SIZE, CHM_BIT_SHIFT);
+  Adafruit_BusIO_RegisterBits tbl_bit = Adafruit_BusIO_RegisterBits(chopper_config_, TBL_BIT_SIZE, TBL_BIT_SHIFT);
+
+
+  toff_bit.write(TOFF_DEFAULT);
+  hstrt_bit.write(HSTRT_DEFAULT);
+  hend_bit.write(HEND_DEFAULT);
+  chm_bit.write(CHM_DEFAULT);
+  tbl_bit.write(TBL_DEFAULT);
 
   global_config_.uint32 = 0;
 
   driver_current_.uint32 = 0;
 
-  chopper_config_.uint32 = 0;
-  chopper_config_.fields.toff = TOFF_DEFAULT;
-  chopper_config_.fields.hstrt = HSTRT_DEFAULT;
-  chopper_config_.fields.hend = HEND_DEFAULT;
-  chopper_config_.fields.chm = CHM_DEFAULT;
-  chopper_config_.fields.tbl = TBL_DEFAULT;
   microsteps_per_step_exponent_ = MICROSTEPS_PER_STEP_EXPONENT_MAX;
 
   pwm_config_.uint32 = 0;
@@ -36,8 +41,7 @@ void TMC2130::setup(size_t chip_select_pin)
   pwm_config_.fields.pwm_autoscale = PWM_AUTOSCALE_DEFAULT;
 }
 
-void TMC2130::setup(size_t chip_select_pin,
-  size_t enable_pin)
+void TMC2130::setup(size_t chip_select_pin, size_t enable_pin)
 {
   setup(chip_select_pin);
   setEnablePin(enable_pin);
@@ -269,88 +273,85 @@ void TMC2130::setMicrostepsPerStepPowerOfTwo(uint8_t exponent)
   {
     case 0:
     {
-      chopper_config_.fields.mres = MRES_001;
+      //chopper_config_.fields.mres = MRES_001;
       break;
     }
     case 1:
     {
-      chopper_config_.fields.mres = MRES_002;
+      //chopper_config_.fields.mres = MRES_002;
       break;
     }
     case 2:
     {
-      chopper_config_.fields.mres = MRES_004;
+      //chopper_config_.fields.mres = MRES_004;
       break;
     }
     case 3:
     {
-      chopper_config_.fields.mres = MRES_008;
+      //chopper_config_.fields.mres = MRES_008;
       break;
     }
     case 4:
     {
-      chopper_config_.fields.mres = MRES_016;
+      //chopper_config_.fields.mres = MRES_016;
       break;
     }
     case 5:
     {
-      chopper_config_.fields.mres = MRES_032;
+      //chopper_config_.fields.mres = MRES_032;
       break;
     }
     case 6:
     {
-      chopper_config_.fields.mres = MRES_064;
+      //chopper_config_.fields.mres = MRES_064;
       break;
     }
     case 7:
     {
-      chopper_config_.fields.mres = MRES_128;
+      //chopper_config_.fields.mres = MRES_128;
       break;
     }
     case 8:
     default:
     {
       microsteps_per_step_exponent_ = MICROSTEPS_PER_STEP_EXPONENT_MAX;
-      chopper_config_.fields.mres = MRES_256;
+      //chopper_config_.fields.mres = MRES_256;
       break;
     }
   }
   setChopperConfig();
 }
 
-uint32_t TMC2130::sendReceivePrevious(TMC2130::MosiDatagram & mosi_datagram)
+uint32_t TMC2130::sendReceivePrevious(TMC2130::Datagram & mosi_datagram)
 {
-  MisoDatagram miso_datagram;
-  miso_datagram.uint64 = 0;
+  Datagram miso_datagram;
+
 
   spiBeginTransaction();
   for (int i=(DATAGRAM_SIZE - 1); i>=0; --i)
   {
-    uint8_t byte_write = (mosi_datagram.uint64 >> (8*i)) & 0xff;
+    uint8_t byte_write = mosi_datagram.raw[i] & 0xff;
 
     uint8_t byte_read = SPI.transfer(byte_write);
-    //Serial.print(byte_read, HEX);
-    miso_datagram.uint64 |= byte_read << (8*i);
+
+    miso_datagram.raw[i] = byte_read;
   }
   spiEndTransaction();
 
   noInterrupts();
-  spi_status_ = miso_datagram.fields.spi_status;
+  //TO-DO FIX
+  //spi_status_ = miso_datagram.raw[0];
   interrupts();
 
-
-
-
-  return miso_datagram.fields.data
+  return miso_datagram.fields.data;
 }
 
 uint32_t TMC2130::write(uint8_t address,
   uint32_t data)
 {
-  MosiDatagram mosi_datagram;
-  mosi_datagram.uint64 = 0;
-  mosi_datagram.fields.rw = RW_WRITE;
-  mosi_datagram.fields.address = address;
+  Datagram mosi_datagram;
+  mosi_datagram.fields.address |= RW_WRITE && 0xFF;
+  mosi_datagram.fields.address |= address;
   mosi_datagram.fields.data = data;
 
   return sendReceivePrevious(mosi_datagram);
@@ -358,10 +359,10 @@ uint32_t TMC2130::write(uint8_t address,
 
 uint32_t TMC2130::read(uint8_t address)
 {
-  MosiDatagram mosi_datagram;
-  mosi_datagram.uint64 = 0;
-  mosi_datagram.fields.rw = RW_READ;
-  mosi_datagram.fields.address = address;
+  Datagram mosi_datagram;
+  mosi_datagram.fields.address |= RW_WRITE && 0xFF;
+  mosi_datagram.fields.address |= address;
+  mosi_datagram.fields.data = 0;
 
   // must read twice to get value at address
   sendReceivePrevious(mosi_datagram);
@@ -432,7 +433,8 @@ void TMC2130::setDriverCurrent()
 
 void TMC2130::setChopperConfig()
 {
-  write(ADDRESS_CHOPCONF,chopper_config_.uint32);
+  //write(ADDRESS_CHOPCONF,chopper_config_.uint32);
+
 }
 
 void TMC2130::setPwmThreshold(uint32_t value)

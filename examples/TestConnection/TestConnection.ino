@@ -1,11 +1,10 @@
 #include <Arduino.h>
-#include <SPI.h>
 #include <TMC2130.h>
 
 const long BAUD = 115200;
 const int LOOP_DELAY = 2000;
-const int CHIP_SELECT_PIN = A2;
-const int CHIP_PWR_PIN = A3;
+const int  CS_PIN = A2;
+uint8_t CHIP_PWR_PIN = A3;
 
 
 // Instantiate TMC2130
@@ -22,7 +21,7 @@ void setup()
   digitalWrite(CHIP_PWR_PIN, HIGH);
   delay(1000);
 
-  stepper_driver.setup(CHIP_SELECT_PIN);
+  stepper_driver.setup(CS_PIN);
 
 
 }
